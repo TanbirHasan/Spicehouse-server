@@ -1,9 +1,11 @@
 
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 const app = express();
+
+require("dotenv").config();
 
 
 app.use(cors());
@@ -11,8 +13,7 @@ app.use(express.json());
 
 const port = 5000;
 
-const uri =
-  "mongodb+srv://spiceuser:KClKK8zwv8Z9dweL@cluster0.u9lhh.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.u9lhh.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -40,12 +41,12 @@ async function run(){
 
       // for single data
 
-    //   app.get("/inventory/:id", async (req, res) => {
-    //     const id = req.params.id;
-    //     const query = { _id: ObjectId(id) };
-    //     const product = await productcollection.findOne(query);
-    //     res.send(product);
-    //   });
+      app.get("/inventory/:id", async (req, res) => {
+        const id = req.params.id;
+        const query = { _id:ObjectId(id) };
+        const product = await productcollection.findOne(query);
+        res.send(product);
+      });
     }
     finally{
 
