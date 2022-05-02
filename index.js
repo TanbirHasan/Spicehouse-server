@@ -43,9 +43,25 @@ async function run(){
 
       app.get("/inventory/:id", async (req, res) => {
         const id = req.params.id;
-        const query = { _id:ObjectId(id) };
+        const query = { _id: ObjectId(id) };
         const product = await productcollection.findOne(query);
         res.send(product);
+      });
+
+      // post a data
+      app.post("/newproduct", async (req, res) => {
+        const newproduct = req.body;
+        const result = await productcollection.insertOne(newproduct);
+        res.send(result);
+      });
+
+      // delete a data
+
+      app.delete("/product/:id", async (req, res) => {
+        const id = req.params.id;
+        const query = { _id: ObjectId(id) };
+        const result = productcollection.deleteOne(query);
+        res.send(result);
       });
     }
     finally{
