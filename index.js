@@ -55,6 +55,15 @@ async function run(){
         res.send(result);
       });
 
+      // getting my list item by email
+
+      app.get("/myitem" , async (req,res) =>{
+        const query = {};
+        const cursor = productcollection.find(query);
+        const myitem = await cursor.toArray();
+        res.send(myitem);
+      } )
+
       // delete a data
 
       app.delete("/product/:id", async (req, res) => {
