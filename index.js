@@ -12,7 +12,7 @@ require("dotenv").config();
 app.use(cors());
 app.use(express.json());
 
-const port = 5000;
+const port = process.env.PORT || 5000;
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.u9lhh.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
@@ -24,13 +24,13 @@ const client = new MongoClient(uri, {
 
 function verifyJWT(req, res, next) {
   const authHeader = req.headers.authorization;
-  console.log(authHeader);
+ 
  
   if (!authHeader) {
     return res.status(401).send({ message: "Unauthorized access" });
   }
   const token = authHeader.split(" ")[1];
-  console.log(token)
+  
   jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
     if (err) {
       return res.status(403).send({message :"Forbidden Access"});
@@ -44,7 +44,7 @@ function verifyJWT(req, res, next) {
 
 
 app.get("/", (req,res) => {
-    res.send("Server is running succesfully. Now connect mongodb to your server")
+    res.send("Server is running succesfully.")
 })
 
 
