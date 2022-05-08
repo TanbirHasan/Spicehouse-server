@@ -31,6 +31,7 @@ async function run(){
     try{
       await client.connect();
       const productcollection = client.db("spice-store").collection("products");
+      
 
       app.get("/products", async (req, res) => {
         const query = {};
@@ -58,11 +59,32 @@ async function run(){
       // getting my list item by email
 
       app.get("/myitem" , async (req,res) =>{
-        const query = {};
+     
+        const email = req.query.email;
+           const query = {email : email};
         const cursor = productcollection.find(query);
         const myitem = await cursor.toArray();
         res.send(myitem);
       } )
+
+      // reduce a single value
+
+      app.put("/reduce/:id", async (req,res) => {
+        const id = req.params.id;
+        const updatedquantity = req.body;
+        const newquantity = Number(updatedquantity.quantity);
+        const filter = { _id: ObjectId(id) };
+        const options = {upsert : true}
+       const updatedDoc = {
+         $set: {
+           quantity: newquantity,
+         },
+       };
+       const result = await productcollection.updateOne(filter,updatedDoc,options);
+       console.log(result);
+       res.send(result);
+
+      })
 
       // delete a data
 
