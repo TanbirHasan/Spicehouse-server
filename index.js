@@ -4,6 +4,7 @@ const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 const app = express();
+const jwt = require("jsonwebtoken");
 
 require("dotenv").config();
 
@@ -21,6 +22,27 @@ const client = new MongoClient(uri, {
 });
 
 
+function verifyJWT(req, res, next) {
+  const authHeader = req.headers.authorization;
+  console.log(authHeader);
+ 
+  if (!authHeader) {
+    return res.status(401).send({ message: "Unauthorized access" });
+  }
+  const token = authHeader.split(" ")[1];
+  console.log(token)
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(403).send({message :"Forbidden Access"});
+    }
+
+    req.decoded = decoded;
+    next();
+  });
+
+}
+
+
 app.get("/", (req,res) => {
     res.send("Server is running succesfully. Now connect mongodb to your server")
 })
@@ -31,7 +53,16 @@ async function run(){
     try{
       await client.connect();
       const productcollection = client.db("spice-store").collection("products");
-      
+
+      // getting user with access token jwt
+
+      app.post("/login", async (req, res) => {
+        const user = req.body;
+        const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+          expiresIn: "1d",
+        });
+        res.send({ accessToken });
+      });
 
       app.get("/products", async (req, res) => {
         const query = {};
@@ -58,57 +89,72 @@ async function run(){
 
       // getting my list item by email
 
-      app.get("/myitem" , async (req,res) =>{
-     
+      app.get("/myitem", verifyJWT, async (req, res) => {
+      
+        // const email = req.query.email;
+        // const query = {email : email};
+        // const cursor = productcollection.find(query);
+        // const orders = await cursor.toArray();
+        // res.send(orders);
+         const decodedemail = req.decoded.email;
+         console.log(decodedemail);
+         
+
         const email = req.query.email;
-           const query = {email : email};
-        const cursor = productcollection.find(query);
-        const myitem = await cursor.toArray();
-        res.send(myitem);
-      } )
+        console.log(email)
+        const query = { email: email };
+        if (email === decodedemail) {
+          const cursor = productcollection.find(query);
+          const orders = await cursor.toArray();
+          res.send(orders);
+        } else {
+          res.status(403).send({ message: "Forbidden" });
+        }
+      });
 
       // reduce a single value
 
-      app.put("/reduce/:id", async (req,res) => {
+      app.put("/reduce/:id", async (req, res) => {
         const id = req.params.id;
         const updatedquantity = req.body;
         const newquantity = Number(updatedquantity.quantity);
         const filter = { _id: ObjectId(id) };
-        const options = {upsert : true}
-       const updatedDoc = {
-         $set: {
-           quantity: newquantity,
-         },
-       };
-       const result = await productcollection.updateOne(filter,updatedDoc,options);
-       console.log(result);
-       res.send(result);
-
-      })
+        const options = { upsert: true };
+        const updatedDoc = {
+          $set: {
+            quantity: newquantity,
+          },
+        };
+        const result = await productcollection.updateOne(
+          filter,
+          updatedDoc,
+          options
+        );
+        console.log(result);
+        res.send(result);
+      });
 
       // incresing quantity by one
 
-        app.put("/increase/:id", async (req, res) => {
-          const id = req.params.id;
-          const increasedquantity = req.body;
-          const newquantity = increasedquantity.quantity;
-          const filter = { _id: ObjectId(id) };
-          const options = { upsert: true };
-          const updatedDoc = {
-            $set: {
-              quantity: newquantity,
-            },
-          };
-          const result = await productcollection.updateOne(
-            filter,
-            updatedDoc,
-            options
-          );
-          console.log(result);
-          res.send(result);
-        });
-
-
+      app.put("/increase/:id", async (req, res) => {
+        const id = req.params.id;
+        const increasedquantity = req.body;
+        const newquantity = increasedquantity.quantity;
+        const filter = { _id: ObjectId(id) };
+        const options = { upsert: true };
+        const updatedDoc = {
+          $set: {
+            quantity: newquantity,
+          },
+        };
+        const result = await productcollection.updateOne(
+          filter,
+          updatedDoc,
+          options
+        );
+        console.log(result);
+        res.send(result);
+      });
 
       // delete a data
 
